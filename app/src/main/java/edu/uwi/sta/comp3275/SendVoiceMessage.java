@@ -1,29 +1,29 @@
 package edu.uwi.sta.comp3275;
 
 
-import android.content.res.ColorStateList;
+import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.media.MediaPlayer;
-import android.media.MediaRecorder;
 import android.os.Bundle;
-import android.os.Environment;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import edu.uwi.sta.comp3275.models.Constants;
+import edu.uwi.sta.comp3275.models.Sender;
 import edu.uwi.sta.comp3275.models.VoiceEncryptor;
 import edu.uwi.sta.comp3275.models.VoicePlayer;
 import edu.uwi.sta.comp3275.models.VoiceRecorder;
@@ -31,18 +31,16 @@ import edu.uwi.sta.comp3275.models.VoiceRecorder;
 public class SendVoiceMessage extends AppCompatActivity {
 
     ImageButton play_btn,stop_btn,record_btn,send_btn;
-    private MediaRecorder myAudioRecorder;
     private String outputFile = null;
-    private VoiceEncryptor voiceEncryptor = new VoiceEncryptor("dontdillydally");
-    private SimpleDateFormat format;
-    private Date date;
+    private VoiceEncryptor voiceEncryptor;
     private VoiceRecorder vr;
+    private VoicePlayer vp;
+    private  boolean playing = false;
+    private boolean hasPermission;
 
-    private static final String RECORD_PATH = Environment.getExternalStorageDirectory().getAbsolutePath()
-            + "/EncryptedRecordings";
 
-    private static final String PREFIX = "encrypted-";
-    private static final String EXT = ".mp4";
+    private static final int REQUEST_BLU = 1;
+    private BluetoothAdapter bluetoothAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +49,8 @@ public class SendVoiceMessage extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        checkPermission();
+
         play_btn = (ImageButton)findViewById(R.id.btn_play);
         stop_btn = (ImageButton)findViewById(R.id.btn_stop);
         record_btn = (ImageButton)findViewById(R.id.btn_record);
@@ -58,17 +58,9 @@ public class SendVoiceMessage extends AppCompatActivity {
 
         disableBtn(stop_btn);
         disableBtn(play_btn);
+        disableBtn(send_btn);
 
-        //outputFile = Environment.getExternalStorageDirectory().getAbsolutePath() + "/recording.mp4";
-
-     /*   myAudioRecorder=new MediaRecorder();
-        myAudioRecorder.reset();
-        myAudioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        myAudioRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        myAudioRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-       // myAudioRecorder.setOutputFile(outputFile);
-    */
-        File recordings = new File(RECORD_PATH);
+        File recordings = new File(Constants.RECORD_PATH);
         if (!recordings.exists()) {
             if (recordings.mkdirs()) {
                 Log.d("FILE", "Successfully created folder");
@@ -76,17 +68,41 @@ public class SendVoiceMessage extends AppCompatActivity {
                 Log.d("FILE", "Failed to create folder");
             }
         }
-       // setUpRecorder();
-        vr = new VoiceRecorder(voiceEncryptor);
 
+        SharedPreferences pref = getSharedPreferences(Constants.SHARED_PREF, MODE_PRIVATE);
+        String key = pref.getString(Constants.KEY, Constants.DEFAULT_KEY);
+
+        if(!key.equals(Constants.DEFAULT_KEY))
+            voiceEncryptor = new VoiceEncryptor(key);
+        else{
+            Toast.makeText(this, "please change the default key in settings to use this feature", Toast.LENGTH_SHORT).show();
+            finish();
+        }
+
+
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        vr = new VoiceRecorder(voiceEncryptor);
+    }
+
+
+    protected void checkPermission(){
+        hasPermission = (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
+        Log.d("MAIN", "Permission " + hasPermission);
+
+        if(!hasPermission){
+            Toast.makeText(this, "Please enable all Permissions in settings to use this feature", Toast.LENGTH_SHORT).show();
+            finish();
+        }
 
     }
 
+
     public String getOutputPath(){
-        date = new Date();
-        format = new SimpleDateFormat("yyyyMMddHHmmss");
+        Date date = new Date();
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
         String dateStr = format.format(date);
-        return RECORD_PATH + "/"+PREFIX + dateStr + EXT;
+        return Constants.RECORD_PATH + "/"+ Constants.PREFIX + dateStr + Constants.EXT;
     }
 
     public void disableBtn(ImageButton btn){
@@ -101,6 +117,27 @@ public class SendVoiceMessage extends AppCompatActivity {
 
 
 
+    public void send(View v){
+        if( bluetoothAdapter!=null && outputFile!=null){
+            startActivityForResult(Sender.createIntent(), REQUEST_BLU);
+        }
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (resultCode == Sender.DISCOVER_DURATION  && requestCode == REQUEST_BLU) {
+            Intent i = Sender.processResult(outputFile, this);
+            if (i != null) {
+                startActivity(i);
+            }
+        }
+        else Toast.makeText(this, "Bluetooth Transfer Denied", Toast.LENGTH_LONG).show();
+    }
+
+
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -110,9 +147,6 @@ public class SendVoiceMessage extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
@@ -123,108 +157,62 @@ public class SendVoiceMessage extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
+
     public void stop (View view){
 
-        vr.stop(outputFile);
-
-       /* myAudioRecorder.stop();
-        myAudioRecorder.release();
-        myAudioRecorder = null;
-        voiceEncryptor.encrypt(outputFile);
-        */
+        if(!playing) {
+            vr.stop(outputFile);
+            enableBtn(send_btn);
+            Toast.makeText(this, "Audio recorded successfully", Toast.LENGTH_LONG).show();
+        }
+        else if(vp!=null) {
+                vp.stop();
+                playing = false;
+        }
         disableBtn(stop_btn);
         enableBtn(play_btn);
-
-        Toast.makeText(this, "Audio recorded successfully", Toast.LENGTH_LONG).show();
+        enableBtn(record_btn);
     }
+
 
     public void record (View view){
 
-      /*  try {
-            outputFile = getOutputPath();
-            myAudioRecorder.setOutputFile(outputFile);
-            myAudioRecorder.prepare();
-            myAudioRecorder.start();
+        if(outputFile!=null){
+            File lastRecording = new File(outputFile);
+            if(lastRecording.delete()) Log.d("File", "Delete Successful");
+            else Log.d("File", "Delete Failed");
         }
 
-        catch (IllegalStateException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }*/
         outputFile = getOutputPath();
         vr.record(outputFile);
         disableBtn(record_btn);
+        record_btn.setColorFilter(Color.argb(215, 255, 0, 0)); //color while recording
+        disableBtn(play_btn);
         enableBtn(stop_btn);
 
         Toast.makeText(this, "Recording started", Toast.LENGTH_LONG).show();
     }
 
+
     public void play(View view){
 
-       // voiceEncryptor.decrypt();
-
-        VoicePlayer vp = new VoicePlayer(voiceEncryptor, this);
+        vp = new VoicePlayer(voiceEncryptor, this);
         vp.setOnComplete(new VoicePlayer.OnVoicePlayerComplete() {
             @Override
             public void onComplete() {
-                disableBtn(play_btn);
                 disableBtn(stop_btn);
                 enableBtn(record_btn);
-                //setUpRecorder();
+                enableBtn(play_btn);
+                playing=false;
             }
         });
+        disableBtn(play_btn);
+        disableBtn(record_btn);
+        enableBtn(stop_btn);
+        play_btn.setColorFilter(Color.argb(215, 0, 200, 150)); //color while playing
+        playing = true;
         vp.play(outputFile);
-
-       /* MediaPlayer m = new MediaPlayer();
-
-        m.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            public void onCompletion(MediaPlayer mp) {
-                mp.release();
-                mp = null;
-                setUpRecorder();
-
-                disableBtn(play_btn);
-                disableBtn(stop_btn);
-                enableBtn(record_btn);
-            }
-        });
-
-        try {
-            m.setDataSource(outputFile);
-        }
-
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            m.prepare();
-        }
-
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        m.start();
-        Toast.makeText(getApplicationContext(), "Playing audio", Toast.LENGTH_LONG).show();*/
     }
-
-    public void setUpRecorder() {
-        //outputFile = Environment.getExternalStorageDirectory().getAbsolutePath() + "/recording.mp4";
-
-        myAudioRecorder=new MediaRecorder();
-        myAudioRecorder.reset();
-        myAudioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        myAudioRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        myAudioRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        //myAudioRecorder.setOutputFile(outputFile);
-    }
-
-
 
 }

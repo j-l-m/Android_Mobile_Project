@@ -56,15 +56,26 @@ public class VoicePlayer {
     public void setListener(){
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
-            public void onCompletion(MediaPlayer mp) {
-                mp.release();
-                mp = null;
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                VoicePlayer.mediaPlayer.release();
+                VoicePlayer.mediaPlayer = null;
                 voiceEncryptor.encrypt(filePath);
                 if (vpc != null)
                     vpc.onComplete();
                 filePath = null;
             }
         });
+    }
+
+
+    public void stop(){
+        if (mediaPlayer.isPlaying()) {
+            mediaPlayer.stop();
+            mediaPlayer.release();
+            mediaPlayer=null;
+            voiceEncryptor.encrypt(filePath);
+            filePath = null;
+        }
     }
 
 

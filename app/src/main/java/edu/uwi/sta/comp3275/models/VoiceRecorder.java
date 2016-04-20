@@ -5,8 +5,12 @@ import android.media.MediaRecorder;
 import java.io.IOException;
 
 /**
- *
- */
+*
+*
+* Taken from:
+* http://www.tutorialspoint.com/android/android_audio_capture.htm
+*
+* */
 public class VoiceRecorder {
 
     private  MediaRecorder recorder;
