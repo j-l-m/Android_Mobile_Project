@@ -21,25 +21,42 @@ import java.util.List;
 
 import edu.uwi.sta.comp3275.R;
 
-/**
- * Created by JM on 4/19/2016.
+/*
+ *  A custom file selector dialog
  */
+
 public class FileListDialog extends DialogFragment {
 
-    private File parent_dir, current_dir;
-    private List<CustomFile> fileList = new ArrayList<>();
+    //base directory and current directory
+    private File base_dir, current_dir;
+
+    //Array list used to display files on device storage
+    private List<CustomFile> fileList;
+
+    //Adapter used with file list
     private ArrayAdapter<CustomFile> fileAdapter;
+
+    //file list ListView
     private ListView lv;
+
+    //Button used to move up one directory level
     private Button moveUp;
+
+    //used to move data from this diaglog class to the Activity using it
     private DialogResult dialogResult;
 
 
+    /*
+     Constructor for FileListDialog
+     */
     public FileListDialog() {
-        // Empty constructor required for DialogFragment
-        parent_dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-        current_dir = parent_dir;
+        base_dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
+        current_dir = base_dir;
     }
 
+    /*
+     Returns an instance of the FileListDialog Fragment
+     */
     public static FileListDialog newInstance(String title) {
         FileListDialog frag = new FileListDialog();
         Bundle args = new Bundle();
@@ -48,6 +65,11 @@ public class FileListDialog extends DialogFragment {
         return frag;
     }
 
+    /*
+     Initializes UI elements of the Dialog
+     see layout/file_list.xml
+     Sets click listeners and enables directory navigation
+     */
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
@@ -58,58 +80,81 @@ public class FileListDialog extends DialogFragment {
 
         moveUp = (Button) dialog.findViewById(R.id.move_up);
         moveUp.setOnClickListener(new View.OnClickListener() {
+            /*
+                Update List to show contents of parent directory of current_dir
+             */
             @Override
             public void onClick(View v) {
-                buildFileList(current_dir);
+                if(!base_dir.equals(current_dir))
+                    buildFileList(current_dir.getParentFile());
             }
         });
 
+        //initialize list view, fileList and array adapter
         lv = (ListView)dialog.findViewById(R.id.dialog_file_list);
+        fileList = new ArrayList<>();
+        fileAdapter = new ArrayAdapter<>(getActivity(),android.R.layout.simple_list_item_1, fileList);
+        lv.setAdapter(fileAdapter);
 
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            /*
+               If the selected item on the list is a directory, then update list with
+                buildFileList();
+                Else if selected file is a file run the finish() method of the DialogResult interface
+                    this enables the selected file to be passed from the dialog to the activity
+                    then dismiss dialog
+             */
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 File selected = fileList.get(position).getFile();
                 if (selected.isDirectory()) {
                     buildFileList(selected);
                 } else if (selected.isFile()) {
-                    //setSelected(selected);
                     if (dialogResult != null)
                         dialogResult.finish(selected);
                     dismiss();
                 }
             }
         });
-        builder.setTitle("File selector");
+        builder.setTitle("File selector");  //set title of dialog
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-
+                //do nothing
             }
         });
-
         buildFileList(current_dir);
         return builder.create();
     }
 
 
+    /*
+        Builds the list of files displayed in the dialog
+        updates the fileList ArrayList and notifies the ArrayAdapter
+     */
     public void buildFileList(File file){
 
         File[] files = file.listFiles();
         System.out.print(Arrays.toString(files));
         fileList.clear();
+        current_dir=file;
 
         for(File f : files){
-
+            //ensures only files that can be used by the app are displayed
             if((!f.isDirectory() && isEncryptedRecording(f)) || f.isDirectory())
             fileList.add(new CustomFile(f.getPath()));
         }
-        fileAdapter = new ArrayAdapter<>(getActivity(),android.R.layout.simple_list_item_1, fileList);
 
-        lv.setAdapter(fileAdapter);
+        fileAdapter.notifyDataSetChanged();
     }
 
 
+    /*
+     Verifies that file name matches the naming convention for the application's
+     encrypted files
+     see model/Constants.java for values
+     */
     public boolean isEncryptedRecording(File file){
         String filename = file.getName();
         return filename.startsWith(Constants.PREFIX) && filename.endsWith(Constants.EXT);
@@ -117,12 +162,18 @@ public class FileListDialog extends DialogFragment {
 
 
 
+    /*
+      Used to pass data from the dialog to the activity
+     */
     public void setDialogResult(DialogResult result){
         this.dialogResult = result;
     }
 
 
-
+    /*
+     Interface used to pass data from the dialog to the activity
+     The activity using the dialog implements this to get data selected from the list
+     */
     public interface DialogResult{
         void finish(File result);
     }

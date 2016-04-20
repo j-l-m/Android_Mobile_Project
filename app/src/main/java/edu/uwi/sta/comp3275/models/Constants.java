@@ -8,7 +8,9 @@ import edu.uwi.sta.comp3275.PlayEncryptedMessages;
 import edu.uwi.sta.comp3275.SendVoiceMessage;
 import edu.uwi.sta.comp3275.SetKey;
 
-/**
+/*
+ *
+ * Constant values used across all activities
  *
  */
 public class Constants {
@@ -31,7 +33,7 @@ public class Constants {
     public static final String PREFIX = "encrypted-";
     public static final String EXT = ".mp4";
 
-    //Map Activities
+    //Get classes for startActivity()
     public static Class getClass(String str){
         HashMap h = activities();
         return (Class)h.get(str);
@@ -43,9 +45,7 @@ public class Constants {
 
 
 
-
-
-
+    //build hash map of activity class.
     private static HashMap activities(){
         HashMap hashMap = new HashMap();
         hashMap.put("Set Key", SetKey.class);
@@ -56,6 +56,7 @@ public class Constants {
 
 
 
+    //String array of activities used in Main activity list
     private static String[] activityList() {
         String[] strings = new String[]{"Send Voice Message","Play Voice Message","Set Key"};
         return strings;

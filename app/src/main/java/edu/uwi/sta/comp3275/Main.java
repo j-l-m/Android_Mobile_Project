@@ -25,11 +25,14 @@ import edu.uwi.sta.comp3275.models.Constants;
 
 public class Main extends AppCompatActivity {
 
+    //Main listView
     private ListView main_list;
+    //ArrayAdapter
     private ArrayAdapter<String> adapter;
+    //Check permission
     private boolean hasPermission;
 
-    private static final int REQUESTS = 100;
+    private static final int REQUESTS = 100;//permissions reques code
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +44,9 @@ public class Main extends AppCompatActivity {
 
         checkPermission();
 
+        //initialize UI Elements
         main_list = (ListView)findViewById(R.id.list_main);
+        //Uses Constants.ACTIVITIES Array
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, Constants.ACTIVITIES);
         main_list.setAdapter(adapter);
         setListener();
@@ -49,7 +54,7 @@ public class Main extends AppCompatActivity {
     }
 
 
-
+    //Check for permissions
     protected void checkPermission(){
         hasPermission = (ActivityCompat.checkSelfPermission(Main.this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(Main.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
@@ -84,7 +89,10 @@ public class Main extends AppCompatActivity {
 
     }
 
-
+    /*
+      Sets the onItemClick Listener of the main_list ListView
+      starts the activity selected from the list
+     */
     protected void setListener(){
         main_list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -94,7 +102,11 @@ public class Main extends AppCompatActivity {
         });
     }
 
-
+    /*
+      Accepts a string selected from the main list
+      String is passed to the Constants.getClass() function
+      which returns the class used to start the selected activity
+     */
     protected void activityStart(String act){
         Class c = Constants.getClass(act);
         if(c!=null){

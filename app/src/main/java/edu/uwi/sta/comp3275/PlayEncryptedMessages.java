@@ -6,14 +6,11 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,13 +24,22 @@ import edu.uwi.sta.comp3275.models.VoicePlayer;
 
 public class PlayEncryptedMessages extends AppCompatActivity {
 
+    //TextView that displays the selected file's path
     private TextView fileLocation;
+    //VoicePlayer object for playback
     private VoicePlayer vp;
+    //Indicates if the voice player is currently playing
     private  boolean playing = false;
+    //Media control buttons
     private ImageButton stop_btn, play_btn;
+    //Encryptor
     private VoiceEncryptor voiceEncryptor;
+    //path of selected file
     private String file;
+    //permissions check
     private  boolean hasPermission;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,9 +50,11 @@ public class PlayEncryptedMessages extends AppCompatActivity {
 
         checkPermission();
 
+        //Get encryption key from shared preferences
         SharedPreferences pref = getSharedPreferences(Constants.SHARED_PREF, MODE_PRIVATE);
         String key = pref.getString(Constants.KEY, Constants.DEFAULT_KEY);
 
+        //Determine if user can access feature by ensuring the default key was changed
         if(!key.equals(Constants.DEFAULT_KEY))
             voiceEncryptor = new VoiceEncryptor(key);
         else{
@@ -54,6 +62,8 @@ public class PlayEncryptedMessages extends AppCompatActivity {
             finish();
         }
 
+
+        //initialize Views
         fileLocation = (TextView)findViewById(R.id.txt_file_location);
 
         stop_btn = (ImageButton)findViewById(R.id.btn_stop);
@@ -65,7 +75,7 @@ public class PlayEncryptedMessages extends AppCompatActivity {
 
     }
 
-
+    //Check for permissions to determine if user can access this activities features
     protected void checkPermission(){
         hasPermission = (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
@@ -78,16 +88,27 @@ public class PlayEncryptedMessages extends AppCompatActivity {
 
     }
 
+    /*
+      Disables buttons and changes button appearance
+     */
     public void disableBtn(ImageButton btn){
         btn.setEnabled(false);
         btn.setColorFilter(Color.argb(215, 255, 255, 255));
     }
 
+    /*
+      Enables buttons and changes button appearance
+     */
     public void enableBtn(ImageButton btn){
         btn.setEnabled(true);
         btn.setColorFilter(Color.argb(0, 0, 0, 0));
     }
 
+    /*
+       onClick method of stop button
+       Stops voicePlayer playback and
+       resets buttons
+     */
     public void stop (View view){
 
         if(vp!=null) {
@@ -98,10 +119,15 @@ public class PlayEncryptedMessages extends AppCompatActivity {
         enableBtn(play_btn);
     }
 
-
+    /*
+       onClick method of play button
+       Starts voicePlayer playback and
+       sets buttons
+     */
     public void play(View view){
         vp = new VoicePlayer(voiceEncryptor, this);
         vp.setOnComplete(new VoicePlayer.OnVoicePlayerComplete() {
+            //Actions performed on completion of playback
             @Override
             public void onComplete() {
                 disableBtn(stop_btn);
@@ -117,15 +143,22 @@ public class PlayEncryptedMessages extends AppCompatActivity {
     }
 
 
-
+    /*
+    onClick method of the Select File button
+    invokes showAlertDialog();
+     */
     public void displayFiles(View v){
         showAlertDialog();
     }
 
+    /*
+     Creates and displays the FileListDialog
+     */
     private void showAlertDialog() {
         FragmentManager fm = getFragmentManager();
         FileListDialog alertDialog = FileListDialog.newInstance("Some title");
         alertDialog.setDialogResult(new FileListDialog.DialogResult() {
+            //get selected file from list by implementing DialogResult interface methods
             @Override
             public void finish(File result) {
                 fileLocation.setText(result.getAbsolutePath());

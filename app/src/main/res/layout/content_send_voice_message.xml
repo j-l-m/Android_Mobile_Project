@@ -12,59 +12,59 @@
     tools:context="edu.uwi.sta.comp3275.SendVoiceMessage"
     tools:showIn="@layout/activity_send_voice_message">
 
-
-    <ImageButton
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Play"
-        android:id="@+id/btn_play"
-        android:onClick="play"
-        android:src="@drawable/ic_play_arrow_black_24dp"
-        android:layout_alignTop="@+id/btn_stop"
-        android:layout_toRightOf="@+id/btn_stop"
-        android:layout_toEndOf="@+id/btn_stop"
-        android:padding="10dp"
-        android:background="@android:color/transparent" />
-
-    <ImageButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="stop"
-        android:id="@+id/btn_stop"
-        android:onClick="stop"
-        android:src="@drawable/ic_stop_black_24dp"
-        android:layout_alignTop="@+id/btn_record"
-        android:layout_toRightOf="@+id/btn_record"
-        android:layout_toEndOf="@+id/btn_record"
-        android:padding="10dp"
-        android:background="@android:color/transparent"/>
-
-    <ImageButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="record"
-        android:id="@+id/btn_record"
-        android:onClick="record"
-        android:src="@drawable/ic_mic_black_24dp"
-        android:layout_marginBottom="75dp"
-        android:layout_marginLeft="49dp"
-        android:layout_marginStart="49dp"
+        android:orientation="horizontal"
+        android:layout_marginBottom="55dp"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:padding="10dp"
-        android:background="@android:color/transparent"/>
+        android:layout_alignParentRight="false"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="false"
+        android:gravity="center_horizontal">
 
-    <ImageButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/btn_send"
-        android:src="@drawable/ic_bluetooth_black_24dp"
-        android:layout_alignTop="@+id/btn_play"
-        android:layout_toRightOf="@+id/btn_play"
-        android:layout_toEndOf="@+id/btn_play"
-        android:onClick="send"
-        android:background="@android:color/transparent"
-        android:padding="10dp" />
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="record"
+            android:id="@+id/btn_record"
+            android:onClick="record"
+            android:src="@drawable/ic_mic_black_24dp"
+            android:padding="10dp"
+            android:background="@android:color/transparent"
+            android:layout_gravity="center_horizontal" />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="stop"
+            android:id="@+id/btn_stop"
+            android:onClick="stop"
+            android:src="@drawable/ic_stop_black_24dp"
+            android:padding="10dp"
+            android:background="@android:color/transparent"
+            android:layout_gravity="center_horizontal" />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Play"
+            android:id="@+id/btn_play"
+            android:onClick="play"
+            android:src="@drawable/ic_play_arrow_black_24dp"
+            android:padding="10dp"
+            android:background="@android:color/transparent"
+            android:layout_gravity="center_horizontal" />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btn_send"
+            android:src="@drawable/ic_bluetooth_black_24dp"
+            android:onClick="send"
+            android:background="@android:color/transparent"
+            android:padding="10dp"
+            android:layout_gravity="center_horizontal" />
+    </LinearLayout>
 
 </RelativeLayout>
