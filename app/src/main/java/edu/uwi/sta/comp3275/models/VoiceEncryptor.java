@@ -1,9 +1,8 @@
 package edu.uwi.sta.comp3275.models;
 
 /**
- * Created by JMungal on 09/03/2016.
+ * Created by JM on 09/03/2016.
  */
-import android.os.Environment;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
@@ -21,10 +20,8 @@ public class VoiceEncryptor{
 
 
     private String secret;
-    private static final String filepath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/recording.mp4";
 
     public VoiceEncryptor(String secret) {
-
         this.secret = secret;
     }
 
@@ -47,19 +44,17 @@ public class VoiceEncryptor{
         Cipher aesCipher = null;
         try {
             aesCipher = Cipher.getInstance("AES");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
             e.printStackTrace();
         }
         return aesCipher;
     }
 
 
-    private byte[] getFileBytes(){
+    private byte[] getFileBytes(String filepath){
         FileInputStream fileInputStream=null;
 
-        File file = new File(this.filepath);
+        File file = new File(filepath);
 
         byte[] input = new byte[(int) file.length()];
 
@@ -80,19 +75,19 @@ public class VoiceEncryptor{
     }
 
 
-    public void decrypt(){
+    public void decrypt(String filepath){
         try{
             byte[] key = createKey(this.secret);
             SecretKeySpec aesKey= new SecretKeySpec(key, "AES");
             Cipher aesCipher = createCipher();
 
-            byte[] input = getFileBytes();
+            byte[] input = getFileBytes(filepath);
 
             aesCipher.init(Cipher.DECRYPT_MODE, aesKey);
             byte[] fileDecrypted = aesCipher.doFinal(input);
 
             try  {
-                FileOutputStream fos = new FileOutputStream(this.filepath);
+                FileOutputStream fos = new FileOutputStream(filepath);
                 fos.write(fileDecrypted);
             } catch (IOException ioe) {
                 ioe.printStackTrace();
@@ -104,19 +99,19 @@ public class VoiceEncryptor{
     }
 
 
-    public void encrypt(){
+    public void encrypt(String filepath){
         try{
             byte[] key = createKey(this.secret);
             SecretKeySpec aesKey= new SecretKeySpec(key, "AES");
             Cipher aesCipher = createCipher();
 
-            byte[] input = getFileBytes();
+            byte[] input = getFileBytes(filepath);
 
             aesCipher.init(Cipher.ENCRYPT_MODE, aesKey);
             byte[] fileEncrypted = aesCipher.doFinal(input);
 
             try  {
-                FileOutputStream fos = new FileOutputStream(this.filepath);
+                FileOutputStream fos = new FileOutputStream(filepath);
                 fos.write(fileEncrypted);
             } catch (IOException ioe) {
                 ioe.printStackTrace();

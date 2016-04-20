@@ -89,7 +89,7 @@ public class Main extends AppCompatActivity {
         myAudioRecorder.release();
         /*Encryptor encryptor = new Encryptor("dontdillydally");
         encryptor.encrypt();*/
-        voiceEncryptor.encrypt();
+        voiceEncryptor.encrypt(outputFile);
         myAudioRecorder = null;
 
         stop_btn.setEnabled(false);
@@ -104,12 +104,7 @@ public class Main extends AppCompatActivity {
             myAudioRecorder.start();
         }
 
-        catch (IllegalStateException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        catch (IOException e) {
+        catch (IllegalStateException | IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -124,7 +119,7 @@ public class Main extends AppCompatActivity {
     public void play(View view){
      /*   Decryptor Decryptor = new Decryptor("dontdillydally");
         Decryptor.decrypt();*/
-        voiceEncryptor.decrypt();
+        voiceEncryptor.decrypt(outputFile);
         MediaPlayer m = new MediaPlayer();
 
         m.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
