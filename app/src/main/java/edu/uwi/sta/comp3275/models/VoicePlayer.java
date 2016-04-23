@@ -60,7 +60,7 @@ public class VoicePlayer {
 
         catch (IOException e) {
             e.printStackTrace();
-            Toast.makeText(context, "Could not decrypt", Toast.LENGTH_LONG).show();
+            Toast.makeText(context, "Could not decrypt, File is now unusable", Toast.LENGTH_LONG).show();
         }
 
     }
