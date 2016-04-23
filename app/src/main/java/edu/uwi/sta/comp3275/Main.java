@@ -1,38 +1,38 @@
 package edu.uwi.sta.comp3275;
 
-import android.media.MediaPlayer;
-import android.media.MediaRecorder;
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Environment;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Button;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.Toast;
 
-import java.io.IOException;
+import java.util.Arrays;
 
-import edu.uwi.sta.comp3275.models.Decryptor;
-import edu.uwi.sta.comp3275.models.Encryptor;
-import edu.uwi.sta.comp3275.models.VoiceEncryptor;
+import edu.uwi.sta.comp3275.models.Constants;
 
 
-/*
-*
-* Taken from:
-* http://www.tutorialspoint.com/android/android_audio_capture.htm
-*
-* */
 
 
 public class Main extends AppCompatActivity {
 
-    Button play_btn,stop_btn,record_btn;
-    private MediaRecorder myAudioRecorder;
-    private String outputFile = null;
-    private VoiceEncryptor voiceEncryptor = new VoiceEncryptor("dontdillydally");
+    //Main listView
+    private ListView main_list;
+    //ArrayAdapter
+    private ArrayAdapter<String> adapter;
+    //Check permission
+    private boolean hasPermission;
+
+    private static final int REQUESTS = 100;//permissions reques code
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,23 +41,77 @@ public class Main extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        play_btn = (Button)findViewById(R.id.btn_play);
-        stop_btn = (Button)findViewById(R.id.btn_stop);
-        record_btn = (Button)findViewById(R.id.btn_record);
 
-        play_btn.setEnabled(false);
-        stop_btn.setEnabled(false);
+        checkPermission();
 
-        outputFile = Environment.getExternalStorageDirectory().getAbsolutePath() + "/recording.mp4";
+        //initialize UI Elements
+        main_list = (ListView)findViewById(R.id.list_main);
+        //Uses Constants.ACTIVITIES Array
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, Constants.ACTIVITIES);
+        main_list.setAdapter(adapter);
+        setListener();
 
-        myAudioRecorder=new MediaRecorder();
-        myAudioRecorder.reset();
-        myAudioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        myAudioRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        myAudioRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        myAudioRecorder.setOutputFile(outputFile);
+    }
 
 
+    //Check for permissions
+    protected void checkPermission(){
+        hasPermission = (ActivityCompat.checkSelfPermission(Main.this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(Main.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
+        Log.d("MAIN", "Permission " + hasPermission);
+
+        if(!hasPermission)
+            ActivityCompat.requestPermissions(Main.this, new String[]{Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE},REQUESTS);
+    }
+
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+
+        System.out.println(Arrays.toString(grantResults));
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode){
+
+            case  REQUESTS: {
+                if(grantResults.length == 2 && grantResults[0]+grantResults[1] == PackageManager.PERMISSION_GRANTED){
+                    //do nothing
+                }
+                else{
+                    Toast.makeText(this, "Permissions not granted. You will not be able to use all features", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+
+
+    }
+
+    /*
+      Sets the onItemClick Listener of the main_list ListView
+      starts the activity selected from the list
+     */
+    protected void setListener(){
+        main_list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                activityStart(Constants.ACTIVITIES[position]);
+            }
+        });
+    }
+
+    /*
+      Accepts a string selected from the main list
+      String is passed to the Constants.getClass() function
+      which returns the class used to start the selected activity
+     */
+    protected void activityStart(String act){
+        Class c = Constants.getClass(act);
+        if(c!=null){
+            startActivity(new Intent(Main.this, c ));
+        }
     }
 
 
@@ -84,89 +138,6 @@ public class Main extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void stop (View view){
-        myAudioRecorder.stop();
-        myAudioRecorder.release();
-        /*Encryptor encryptor = new Encryptor("dontdillydally");
-        encryptor.encrypt();*/
-        voiceEncryptor.encrypt();
-        myAudioRecorder = null;
 
-        stop_btn.setEnabled(false);
-        play_btn.setEnabled(true);
-
-        Toast.makeText(this, "Audio recorded successfully", Toast.LENGTH_LONG).show();
-    }
-
-    public void record (View view){
-        try {
-            myAudioRecorder.prepare();
-            myAudioRecorder.start();
-        }
-
-        catch (IllegalStateException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        record_btn.setEnabled(false);
-        stop_btn.setEnabled(true);
-
-
-        Toast.makeText(this, "Recording started", Toast.LENGTH_LONG).show();
-    }
-
-    public void play(View view){
-     /*   Decryptor Decryptor = new Decryptor("dontdillydally");
-        Decryptor.decrypt();*/
-        voiceEncryptor.decrypt();
-        MediaPlayer m = new MediaPlayer();
-
-        m.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            public void onCompletion(MediaPlayer mp) {
-                mp.release();
-                mp = null;
-                setUpRecorder();
-                play_btn.setEnabled(false);
-                record_btn.setEnabled(true);
-                stop_btn.setEnabled(false);
-            }
-        });
-
-        try {
-            m.setDataSource(outputFile);
-        }
-
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            m.prepare();
-        }
-
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        m.start();
-        Toast.makeText(getApplicationContext(), "Playing audio", Toast.LENGTH_LONG).show();
-    }
-
-    public void setUpRecorder(){
-        outputFile = Environment.getExternalStorageDirectory().getAbsolutePath() + "/recording.mp4";
-
-        myAudioRecorder=new MediaRecorder();
-        myAudioRecorder.reset();
-        myAudioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        myAudioRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        myAudioRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        myAudioRecorder.setOutputFile(outputFile);
-    }
 
 }
