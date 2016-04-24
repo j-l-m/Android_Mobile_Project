@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.media.audiofx.Visualizer;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -26,7 +27,9 @@ import edu.uwi.sta.comp3275.models.Constants;
 import edu.uwi.sta.comp3275.models.Sender;
 import edu.uwi.sta.comp3275.models.VoiceEncryptor;
 import edu.uwi.sta.comp3275.models.VoicePlayer;
+import edu.uwi.sta.comp3275.models.VisualizerView;
 import edu.uwi.sta.comp3275.models.VoiceRecorder;
+
 
 public class SendVoiceMessage extends AppCompatActivity {
 
@@ -43,6 +46,9 @@ public class SendVoiceMessage extends AppCompatActivity {
     private  boolean playing = false;
     //for checking permissions
     private boolean hasPermission;
+    //Visualizer object and view
+    private Visualizer mVisualizer;
+    private VisualizerView mVisualizerView;
 
     //Bluetooth
     private static final int REQUEST_BLU = 1;
@@ -90,6 +96,8 @@ public class SendVoiceMessage extends AppCompatActivity {
         //initialize bluetooth adapter
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         vr = new VoiceRecorder(voiceEncryptor);
+
+
     }
 
     //Check for permissions to determine if user can access this activities features
@@ -104,6 +112,29 @@ public class SendVoiceMessage extends AppCompatActivity {
         }
 
     }
+
+    /*
+    http://android-er.blogspot.com/2015/02/create-audio-visualizer-for-mediaplayer.html
+    */
+    private void setupVisualizerFxAndUI() {
+
+        // Create the Visualizer object and attach it to our media player.
+        mVisualizer = new Visualizer(vp.getAudioSessionID());
+        mVisualizerView = (VisualizerView)findViewById(R.id.myvisualizerview);
+        mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
+        mVisualizer.setDataCaptureListener(
+                new Visualizer.OnDataCaptureListener() {
+                    public void onWaveFormDataCapture(Visualizer visualizer,
+                                                      byte[] bytes, int samplingRate) {
+                        mVisualizerView.updateVisualizer(bytes);
+                    }
+
+                    public void onFftDataCapture(Visualizer visualizer,
+                                                 byte[] bytes, int samplingRate) {
+                    }
+                }, Visualizer.getMaxCaptureRate() / 2, true, false);
+    }
+
 
     /*
         Sets the output path and filename for the recording
@@ -197,6 +228,7 @@ public class SendVoiceMessage extends AppCompatActivity {
         else if(vp!=null) {
                 vp.stop();
                 playing = false;
+                mVisualizer.setEnabled(false);
         }
         disableBtn(stop_btn);
         enableBtn(play_btn);
@@ -237,6 +269,7 @@ public class SendVoiceMessage extends AppCompatActivity {
     public void play(View view){
 
         vp = new VoicePlayer(voiceEncryptor, this);
+        setupVisualizerFxAndUI();
         vp.setOnComplete(new VoicePlayer.OnVoicePlayerComplete() {
             //performs this actions when playback is completed
             @Override
@@ -244,6 +277,7 @@ public class SendVoiceMessage extends AppCompatActivity {
                 disableBtn(stop_btn);
                 enableBtn(record_btn);
                 enableBtn(play_btn);
+                mVisualizer.setEnabled(false);
                 playing=false;
             }
         });
@@ -252,6 +286,7 @@ public class SendVoiceMessage extends AppCompatActivity {
         enableBtn(stop_btn);
         play_btn.setColorFilter(Color.argb(215, 0, 200, 150)); //color while playing
         playing = true;
+        mVisualizer.setEnabled(true);
         vp.play(outputFile); //play the file located at outputFile path
     }
 

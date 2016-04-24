@@ -96,6 +96,10 @@ public class VoicePlayer {
         }
     }
 
+    public int getAudioSessionID(){
+        return mediaPlayer.getAudioSessionId();
+    }
+
     /*
       Allows the application to implement the OnVoicePlayerComplete interface methods
      */
