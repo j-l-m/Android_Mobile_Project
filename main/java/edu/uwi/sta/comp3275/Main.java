@@ -21,9 +21,7 @@ import java.util.Arrays;
 import edu.uwi.sta.comp3275.models.Constants;
 
 
-/*Akin Bascombe - 813004858
-  Aniesha Scott - 813117989
-  Jason Mungal  - 813005935*/
+
 
 public class Main extends AppCompatActivity {
 
@@ -52,6 +50,7 @@ public class Main extends AppCompatActivity {
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, Constants.ACTIVITIES);
         main_list.setAdapter(adapter);
         setListener();
+
 
     }
 
