@@ -54,14 +54,15 @@ public class VoicePlayer {
 
         try {
             mediaPlayer.prepare();
+            mediaPlayer.start();
+            Toast.makeText(context, "Playing audio", Toast.LENGTH_LONG).show();
         }
 
         catch (IOException e) {
             e.printStackTrace();
+            Toast.makeText(context, "Could not decrypt", Toast.LENGTH_LONG).show();
         }
 
-        mediaPlayer.start();
-        Toast.makeText(context, "Playing audio", Toast.LENGTH_LONG).show();
     }
 
     /*

@@ -107,7 +107,7 @@ public class FileListDialog extends DialogFragment {
              */
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                File selected = fileList.get(position).getFile();
+                File selected = fileAdapter.getItem(position).getFile();//fileList.get(position).getFile();
                 if (selected.isDirectory()) {
                     buildFileList(selected);
                 } else if (selected.isFile()) {
